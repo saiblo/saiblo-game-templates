@@ -11,7 +11,8 @@ class RspLogic : public BaseLogic {
         // Do nothing...
     }
 
-    int setListenTarget() override {
+    int setListenTarget(int &timeLimit, int &lengthLimit) override {
+        // Time and length limits remain default and do not need updating.
         return turn;
     }
 

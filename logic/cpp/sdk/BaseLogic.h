@@ -20,6 +20,9 @@ class BaseLogic {
 
     int listenTarget{-1};
 
+    int timeLimit{3};
+    int lengthLimit{1024};
+
     bool gameOver{};
 
     static Json::Value listen() {
@@ -50,6 +53,30 @@ class BaseLogic {
         replayLocation = v["replay"].asString();
     }
 
+    static void send(uint32_t target, const std::string &msg) {
+        uint32_t len = msg.length();
+        char head[8]{
+                static_cast<char>(len),
+                static_cast<char>(len >> 8),
+                static_cast<char>(len >> 16),
+                static_cast<char>(len >> 24),
+                static_cast<char>(target),
+                static_cast<char>(target >> 8),
+                static_cast<char>(target >> 16),
+                static_cast<char>(target >> 24),
+        };
+        puts(head);
+        puts(msg.c_str());
+    }
+
+    void updateLimits() const {
+        Json::Value v;
+        v["state"] = 0;
+        v["time"] = timeLimit;
+        v["length"] = lengthLimit;
+        send(-1, Json::FastWriter().write(v));
+    }
+
 protected:
     std::vector<PlayerStatus> playerStatus;
 
@@ -65,6 +92,11 @@ protected:
         replay.close();
     }
 
+    static void singleSend(int target, const std::string &msg) {
+        if (target < 0) return;
+        send(target, msg);
+    }
+
     /**
      * Executed after receiving metadata and before entering the major loop.
      *
@@ -77,14 +109,18 @@ protected:
      *
      * This determines the player you listen to during execution of `handleLogic()`.
      *
+     * You can also update the timeLimit and lengthLimit if you like.
+     *
+     * @param timeLimit    reference to the timeLimit
+     * @param lengthLimit  reference to the lengthLimit
      * @return player ID that you will be listening to, or -1 if none.
      */
-    virtual int setListenTarget() = 0;
+    virtual int setListenTarget(int &timeLimit, int &lengthLimit) = 0;
 
     /**
      * Handle game logic as well as sending and receiving messages from players.
      *
-     * Note that timing of the target player starts as soon as the first message is sent.
+     * Note that timing of the target player starts as soon as the first time `anySend()` is called.
      */
     virtual void handleLogic() = 0;
 
@@ -93,7 +129,15 @@ public:
         receiveMetadata();
         prepare();
         while (!gameOver) {
-            listenTarget = setListenTarget();
+            // Set listen target and update limits if necessary.
+            int lastTimeLimit = timeLimit;
+            int lastLengthLimit = lengthLimit;
+            listenTarget = setListenTarget(timeLimit, lengthLimit);
+            if (lastTimeLimit != timeLimit || lastLengthLimit != lengthLimit) {
+                updateLimits();
+            }
+
+            // Handle game logic
             handleLogic();
             ++state;
         }
