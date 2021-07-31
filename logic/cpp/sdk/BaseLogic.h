@@ -97,6 +97,20 @@ protected:
         send(target, msg);
     }
 
+    void anySend(const std::vector<std::pair<int, std::string>> &messages) const {
+        Json::Value v;
+        v["state"] = state;
+        v["listen"].resize(0);
+        if (listenTarget >= 0) v["listen"].append(listenTarget);
+        v["player"].resize(0);
+        v["content"].resize(0);
+        for (const auto &message:messages) {
+            v["player"].append(message.first);
+            v["content"].append(message.second);
+        }
+        send(-1, Json::FastWriter().write(v));
+    }
+
     /**
      * Executed after receiving metadata and before entering the major loop.
      *
