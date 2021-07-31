@@ -18,6 +18,8 @@ enum ErrorType {
     OLE = 2,
 };
 
+typedef std::vector<std::pair<int, std::string>> AnyMessages;
+
 class BaseLogic {
     std::default_random_engine rng{std::random_device()()};
 
@@ -99,12 +101,20 @@ protected:
         replay.close();
     }
 
+    /**
+     * Send message to a target player.
+     *
+     * NOTE: THIS DOES NOT RESET TIMING!
+     *
+     * @param target  the target player ID
+     * @param msg     the message to send
+     */
     static void singleSend(int target, const std::string &msg) {
         if (target < 0) return;
         send(target, msg);
     }
 
-    void anySend(const std::vector<std::pair<int, std::string>> &messages) const {
+    void anySend(const AnyMessages &messages) const {
         Json::Value v;
         v["state"] = state;
         v["listen"].resize(0);
