@@ -19,6 +19,19 @@ class RspLogic : public BaseLogic {
         return turn;
     }
 
+    void writeReplayAndGameOver() {
+        std::stringstream ss;
+        for (const auto &record:history) {
+            ss << record.first << ", " << record.second << std::endl;
+        }
+        writeTextToReplay(ss.str());
+
+        std::vector<int> scores;
+        scores.push_back(win[0]);
+        scores.push_back(win[1]);
+        sendGameOverMessage(scores);
+    }
+
     void handleLogic() override {
         // Send
         AnyMessages messages;
@@ -51,6 +64,15 @@ class RspLogic : public BaseLogic {
             }
         }
 
+        // Terminate game if any error occurs.
+        if (errorType != NONE) {
+            history.emplace_back("Player " + std::to_string(errorPlayer) + " error: " + std::to_string(errorType),
+                                 recvContent);
+            win[1 - errorPlayer] = 1;
+            win[errorPlayer] = 0;
+            writeReplayAndGameOver();
+        }
+
         turn = 1 - turn;  // Reverse turn.
         if (turn == 0) {
             // Both player 0 and player 1 have made their choices.
@@ -61,6 +83,11 @@ class RspLogic : public BaseLogic {
                 ++win[0];
             } else if (choices.first != choices.second) {
                 ++win[1];
+            }
+
+            if (win[0] >= 3 || win[1] >= 3) {
+                history.emplace_back(std::to_string(win[0]), std::to_string(win[1]));
+                writeReplayAndGameOver();
             }
 
             // Increase round counter by 1.

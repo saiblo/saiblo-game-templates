@@ -147,6 +147,27 @@ protected:
     }
 
     /**
+     * Send game-over message to judger.
+     *
+     * As logic will terminate as soon as the message is sent,
+     * please make sure that replay data has been written to the replay file before this method is called.
+     *
+     * @param scores  players' scores, ordered by their indices
+     */
+    void sendGameOverMessage(const std::vector<int> &scores) {
+        Json::Value endInfo;
+        for (int i = 0; i < scores.size(); ++i) {
+            endInfo[std::to_string(i)] = scores[i];
+        }
+        Json::Value v;
+        v["state"] = -1;
+        v["end_info"] = Json::FastWriter().write(endInfo);
+        send(-1, Json::FastWriter().write(v));
+        gameOver = true;
+        exit(0);
+    }
+
+    /**
      * Executed after receiving metadata and before entering the major loop.
      *
      * You can send messages to arbitrary players BUT MAY NOT LISTEN to any one.
