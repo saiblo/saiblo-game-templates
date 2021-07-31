@@ -2,6 +2,7 @@
 #define SAIBLO_LOGIC_CPP_TEMPLATE_BASELOGIC_H
 
 #include <fstream>
+#include <random>
 #include "../jsoncpp/json/json.h"
 
 enum PlayerStatus {
@@ -11,7 +12,15 @@ enum PlayerStatus {
 };
 
 class BaseLogic {
+    std::default_random_engine rng{std::random_device()()};
+
     std::string replayLocation;
+
+    int state{1};
+
+    int listenTarget{-1};
+
+    bool gameOver{};
 
     static Json::Value listen() {
         // Receive message header from judger
@@ -56,9 +65,38 @@ protected:
         replay.close();
     }
 
+    /**
+     * Executed after receiving metadata and before entering the major loop.
+     *
+     * You can send messages to arbitrary players BUT MAY NOT LISTEN to any one.
+     */
+    virtual void prepare() = 0;
+
+    /**
+     * Executed before `handleLogic()`.
+     *
+     * This determines the player you listen to during execution of `handleLogic()`.
+     *
+     * @return player ID that you will be listening to, or -1 if none.
+     */
+    virtual int setListenTarget() = 0;
+
+    /**
+     * Handle game logic as well as sending and receiving messages from players.
+     *
+     * Note that timing of the target player starts as soon as the first message is sent.
+     */
+    virtual void handleLogic() = 0;
+
 public:
     void run() {
         receiveMetadata();
+        prepare();
+        while (!gameOver) {
+            listenTarget = setListenTarget();
+            handleLogic();
+            ++state;
+        }
     }
 };
 
