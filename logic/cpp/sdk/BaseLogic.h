@@ -11,6 +11,13 @@ enum PlayerStatus {
     HUMAN = 2,
 };
 
+enum ErrorType {
+    NONE = -1,
+    RE = 0,
+    TLE = 1,
+    OLE = 2,
+};
+
 class BaseLogic {
     std::default_random_engine rng{std::random_device()()};
 
@@ -109,6 +116,24 @@ protected:
             v["content"].append(message.second);
         }
         send(-1, Json::FastWriter().write(v));
+    }
+
+    std::string getTargetMessage(ErrorType &errorType, int &errorPlayer) const {
+        while (true) {
+            Json::Value v = listen();
+            if (v["player"].asInt() >= 0) {
+                errorType = NONE;
+                errorPlayer = -1;
+                return v["content"].asString();
+            } else {
+                Json::Value errorContent;
+                Json::Reader().parse(v["content"].asString(), errorContent);
+                if (errorContent["state"].asInt() != state) continue; // Special case for TLE
+                errorType = static_cast<ErrorType>(errorContent["error"].asInt());
+                errorPlayer = errorContent["player"].asInt();
+                return errorContent["error_log"].asString();
+            }
+        }
     }
 
     /**
