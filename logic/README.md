@@ -61,6 +61,8 @@ graph TD;
 
 它在每个计时回合的一开始执行，用以设置该回合的监听对象、AI 执行时间上限和 AI 输出长度上限。
 
+**C++ 版：**
+
 该方法需返回一个整数，表示当前回合需要监听消息的 AI 编号。该方法也可以返回 -1，表示当前回合不需要监听任何 AI。
 
 通过修改`timeLimit`和`lengthLimit`的值，游戏开发者可以修改当前回合 AI 的执行时间上限和输出长度上限，单位分别为秒和字节。如果游戏开发者不对其进行设置，框架将沿用上一回合的数值。这两个数值的初始默认设置为 3 和 1024。
@@ -68,6 +70,22 @@ graph TD;
 **一旦该方法调用结束，逻辑框架将立刻向评测机发起请求，对设置的监听对象进行监听并开始计时。**
 
 **严禁在该方法中调用`anySend()`和`getTargetMessage()`！**
+
+**Python 版：**
+
+方法签名改为
+
+```python
+_set_listen_target(self) -> (int, Optional[int], Optional[int])
+```
+
+该方法需返回一个三元组，第一个元素表示当前回合需要监听消息的 AI 编号，后两个元素依次表示该回合 AI 的执行时间上限和输出长度上限，单位分别为秒和字节。
+
+如果该回合不需要调整时间或长度上限，返回值的对应元素改为`None`即可。这两个数值的初始默认设置为 3 和 1024。
+
+**一旦该方法调用结束，逻辑框架将立刻向评测机发起请求，对设置的监听对象进行监听并开始计时。**
+
+**严禁在该方法中调用`_any_send()`和`_get_target_message()`！**
 
 ### `handleLogic()`
 
@@ -115,11 +133,27 @@ graph TD;
 
 ### `getTargetMessage(ErrorType &errorType, int &errorPlayer)`
 
+**C++ 版：**
+
 返回一个字符串，正常情况下表示从监听对象处接受到的一条消息。
 
 `errorType`可以用于判断监听对象是否发生了异常。若`errorType`的值为`NONE`，则表示没有异常发生；否则`errorType`表示相应的错误类型，且`errorPlayer`会被修改为发生错误的玩家编号，此外，该方法会返回错误信息（但这个错误信息一般没有用）。
 
 **严禁在`prepare`和`setListenTarget`中调用该方法！**
+
+**Python 版：**
+
+方法签名改为
+
+```python
+_get_target_message(self) -> (str, ErrorType, int)
+```
+
+返回一个三元组。
+
+当监听对象正常发来消息时，该方法返回`(AI 消息, NONE, -1)`；否则，该方法返回`(错误信息, 错误类型, 发生错误的玩家编号)`。
+
+**严禁在`_prepare`和`_set_listen_target`中调用该方法！**
 
 ### `sendGameOverMessage(const std::vector<int> &scores)`
 

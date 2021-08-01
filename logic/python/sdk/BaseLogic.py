@@ -60,21 +60,55 @@ class BaseLogic:
         }))
 
     def _get_state(self) -> int:
+        """
+        Get current state of the logic.
+
+        :return: value of `self.__state`
+        """
         return self.__state
 
     def _write_text_to_replay(self, text: str):
+        """
+        Write text value to the replay file.
+
+        Note that the replay file is opened with flag `w` rather than `a`.
+
+        :param text:  the text value to write
+        """
         with open(self.__replay_location, 'w') as f:
             f.write(text)
 
     def _write_json_to_replay(self, o: object):
+        """
+        Write JSON object to the replay file.
+
+        Note that the replay file is opened with flag `w` rather than `a`.
+
+        :param o:  the JSON object to write
+        """
         with open(self.__replay_location, 'w') as f:
             f.write(json.dumps(o))
 
     def _single_send(self, target: int, msg: str):
+        """
+        Send message to a target player.
+
+        NOTE: THIS DOES NOT RESET TIMING!
+
+        :param target:  the target player ID
+        :param msg:     the message to send
+        """
         if target >= 0:
             self.__send(target, msg)
 
     def _any_send(self, messages: [(int, str)]):
+        """
+        Send messages to arbitrary players, request judger to listen to
+        the `self.__listen_target` and reset timing if state increases.
+
+        :param messages:  list of int-string tuples, indicating the messages
+                          and their corresponding targets
+        """
         self.__send(-1, json.dumps({
             'state': self.__state,
             'listen': [self.__listen_target] if self.__listen_target >= 0 else [],
@@ -83,6 +117,14 @@ class BaseLogic:
         }))
 
     def _get_target_message(self) -> (str, ErrorType, int):
+        """
+        Get one message from the listen target.
+
+        :return: a tuple of three elements. If no error occurs,
+                 (message from the listen target, NONE, -1) will be returned;
+                 otherwise, (error message, error type, the player that caused the error)
+                 will be returned.
+        """
         while True:
             v = self.__listen()
             if v['player'] >= 0:
@@ -94,6 +136,14 @@ class BaseLogic:
                 return error_content['error_log'], ErrorType(error_content['error']), error_content['player']
 
     def _send_game_over_message(self, scores: [int]):
+        """
+        Send game-over message to judger.
+
+        As logic will terminate as soon as the message is sent,
+        please make sure that replay data has been written to the replay file before this method is called.
+
+        :param scores:  players' scores, ordered by their indices
+        """
         end_info = {str(i): score for i, score in enumerate(scores)}
         self.__send(-1, json.dumps({
             'state': -1,
@@ -103,12 +153,37 @@ class BaseLogic:
         sys.exit(0)
 
     def _prepare(self):
+        """
+        Executed after receiving metadata and before entering the major loop.
+
+        IT IS STRICTLY FORBIDDEN TO CALL `_any_send()` OR `_get_target_message()` IN THIS METHOD!!!
+        """
         raise NotImplementedError()
 
     def _set_listen_target(self) -> (int, Optional[int], Optional[int]):
+        """
+        Executed before `_handle_logic()`.
+
+        This determines the player you listen to during execution of `_handle_logic()`.
+
+        You can also update the timeLimit and lengthLimit if you like.
+
+        Note that timing of the target player starts IMMEDIATELY AFTER this method is called.
+
+        IT IS STRICTLY FORBIDDEN TO CALL `_any_send()` OR `_get_target_message()` IN THIS METHOD!!!
+
+        :return:  a tuple of three elements. The first element is required, representing
+                  player ID that you will be listening to, or -1 if none. The second element
+                  represents the time limit of the current round, or None if the time limit
+                  should remain unchanged. The third element represents the length limit of
+                  the current round, or None if the length limit should remain unchanged.
+        """
         raise NotImplementedError()
 
     def _handle_logic(self):
+        """
+        Handle game logic as well as sending and receiving messages from players.
+        """
         raise NotImplementedError()
 
     def run(self):
