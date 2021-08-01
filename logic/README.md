@@ -133,6 +133,8 @@ graph TD;
 
 ### `std::default_random_engine rng`
 
+> 仅在 C++ 框架中可用。
+
 随机引擎，使用`std::random_device()`作为种子。
 
 游戏开发者也可以不使用框架提供的随机引擎。
