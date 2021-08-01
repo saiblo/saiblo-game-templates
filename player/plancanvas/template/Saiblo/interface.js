@@ -72,6 +72,5 @@ function readMsg(event) {
         sendMsg = startWebSocket(atob(msg.token), msg.token, true);
     } else if (msg.message === "init_spectator_player") { // 观战模式
         gameMode = SPECTATOR;
-        // TODO
     }
 }
