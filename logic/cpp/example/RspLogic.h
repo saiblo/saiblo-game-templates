@@ -4,10 +4,9 @@
 #include "../sdk/BaseLogic.h"
 
 class RspLogic : public BaseLogic {
-    int round = 0;  // BaseLogic has no responsibility for maintaining round information.
     int turn = 0;
 
-    std::vector<std::pair<std::string, std::string>> history;
+    std::vector<std::string> history;
     int win[2]{};
 
     void prepare() override {
@@ -22,7 +21,7 @@ class RspLogic : public BaseLogic {
     void writeReplayAndGameOver() {
         std::stringstream ss;
         for (const auto &record:history) {
-            ss << record.first << ", " << record.second << std::endl;
+            ss << record << std::endl;
         }
         writeTextToReplay(ss.str());
 
@@ -33,17 +32,22 @@ class RspLogic : public BaseLogic {
     }
 
     void sendMsgToPlayer() {
-        AnyMessages messages;
         std::string sendContent;
-        if (round == 0) {
+        if (getState() <= 2) {
             sendContent = "ready";
         } else if (turn == 0) {
-            sendContent = history[round - 1].second;
+            sendContent = history[getState() - 2];
         } else {
-            sendContent = history[round - 1].first;
+            sendContent = history[getState() - 4];
         }
-        messages.emplace_back(turn, sendContent);
-        anySend(messages);  // `singleSend` shouldn't be used as it will not reset timing.
+
+        // Following is an example of using `anySend`.
+        /* AnyMessages messages;
+        messages.emplace_back(turn, sendContent + "\n");
+        anySend(messages); */
+
+        // Using `singleSend` in this case is easier.
+        singleSend(turn, sendContent + "\n");
     }
 
     void listenToPlayerResponse() {
@@ -52,21 +56,20 @@ class RspLogic : public BaseLogic {
         std::string recvContent = getTargetMessage(errorType, errorPlayer);
         if (errorType == NONE) {
             // Error handling is VERY IMPORTANT!!!
+            // Even if no error occurs in the process of listening,
+            // there can still be errors in the `recvContent` itself!!!
             if (recvContent != "rock" && recvContent != "scissors" && recvContent != "paper") {
                 errorType = RE;
                 errorPlayer = turn;
             } else {
-                if (turn == 0) {
-                    history.emplace_back(recvContent, "");
-                } else {
-                    history[round].second = recvContent;
-                }
+                history.push_back(recvContent);
             }
         }
+
         // Terminate game if any error occurs.
         if (errorType != NONE) {
-            history.emplace_back("Player " + std::to_string(errorPlayer) + " error: " + std::to_string(errorType),
-                                 recvContent);
+            history.push_back("Player " + std::to_string(errorPlayer) + " error: " + std::to_string(errorType) + " " +
+                              recvContent);
             win[1 - errorPlayer] = 1;
             win[errorPlayer] = 0;
             writeReplayAndGameOver();
@@ -74,10 +77,10 @@ class RspLogic : public BaseLogic {
     }
 
     void reverseTurn() {
-        turn = 1 - turn;
+        turn = 1 - turn;  // Change turn.
         if (turn == 0) {
             // Both player 0 and player 1 have made their choices.
-            auto choices = history[round];
+            auto choices = std::make_pair(history[getState() - 2], history[getState() - 1]);
             if (choices.first == "rock" && choices.second == "scissors" ||
                 choices.first == "scissors" && choices.second == "paper" ||
                 choices.first == "paper" && choices.second == "rock") {
@@ -87,16 +90,15 @@ class RspLogic : public BaseLogic {
             }
 
             if (win[0] >= 3 || win[1] >= 3) {
-                history.emplace_back(std::to_string(win[0]), std::to_string(win[1]));
+                history.push_back(std::to_string(win[0]) + ":" + std::to_string(win[1]));
                 writeReplayAndGameOver();
             }
-
-            // Increase round counter by 1.
-            ++round;
         }
     }
 
     void handleLogic() override {
+        // `handleLogic()` does not necessarily have to be composed of these three phases.
+        // You can create your own way of logic handling.
         sendMsgToPlayer();
         listenToPlayerResponse();
         reverseTurn();

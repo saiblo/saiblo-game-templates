@@ -89,6 +89,10 @@ class BaseLogic {
 protected:
     std::vector<PlayerStatus> playerStatus;
 
+    int getState() const {
+        return state;
+    }
+
     void writeTextToReplay(const std::string &text) {
         std::ofstream replay(replayLocation);
         replay << text;
@@ -170,7 +174,7 @@ protected:
     /**
      * Executed after receiving metadata and before entering the major loop.
      *
-     * You can send messages to arbitrary players BUT MAY NOT LISTEN to any one.
+     * IT IS STRICTLY FORBIDDEN TO CALL `anySend()` OR `getTargetMessage()` IN THIS METHOD!!!
      */
     virtual void prepare() = 0;
 
@@ -181,6 +185,10 @@ protected:
      *
      * You can also update the timeLimit and lengthLimit if you like.
      *
+     * Note that timing of the target player starts IMMEDIATELY AFTER this method is called.
+     *
+     * IT IS STRICTLY FORBIDDEN TO CALL `anySend()` OR `getTargetMessage()` IN THIS METHOD!!!
+     *
      * @param timeLimit    reference to the timeLimit
      * @param lengthLimit  reference to the lengthLimit
      * @return player ID that you will be listening to, or -1 if none.
@@ -189,8 +197,6 @@ protected:
 
     /**
      * Handle game logic as well as sending and receiving messages from players.
-     *
-     * Note that timing of the target player starts as soon as the first time `anySend()` is called.
      */
     virtual void handleLogic() = 0;
 
@@ -205,6 +211,9 @@ public:
             listenTarget = setListenTarget(timeLimit, lengthLimit);
             if (lastTimeLimit != timeLimit || lastLengthLimit != lengthLimit) {
                 updateLimits();
+            }
+            if (listenTarget >= 0) {
+                anySend(AnyMessages()); // Start timing of the listenTarget
             }
 
             // Handle game logic
