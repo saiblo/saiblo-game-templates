@@ -21,8 +21,6 @@ enum ErrorType {
 typedef std::vector<std::pair<int, std::string>> AnyMessages;
 
 class BaseLogic {
-    std::default_random_engine rng{std::random_device()()};
-
     std::string replayLocation;
 
     int state{1};
@@ -87,18 +85,42 @@ class BaseLogic {
     }
 
 protected:
+    std::default_random_engine rng{std::random_device()()};
+
+    /**
+     * Indicate players' status, ordered by the players' ID.
+     */
     std::vector<PlayerStatus> playerStatus;
 
+    /**
+     * Get current state of the logic.
+     *
+     * @return  value of `state`
+     */
     int getState() const {
         return state;
     }
 
+    /**
+     * Write text value to the replay file.
+     *
+     * Note that the replay file is opened with flag `w` rather than `a`.
+     *
+     * @param text  the text value to write
+     */
     void writeTextToReplay(const std::string &text) {
         std::ofstream replay(replayLocation);
         replay << text;
         replay.close();
     }
 
+    /**
+     * Write JSON object to the replay file.
+     *
+     * Note that the replay file is opened with flag `w` rather than `a`.
+     *
+     * @param json  the JSON object to write
+     */
     void writeJsonToReplay(const Json::Value &json) {
         std::ofstream replay(replayLocation);
         replay << json;
@@ -118,6 +140,13 @@ protected:
         send(target, msg);
     }
 
+    /**
+     * Send messages to arbitrary players, request judger to listen to
+     * the `listenTarget` and reset timing if state increases.
+     *
+     * @param messages  vector of int-string pairs, indicating the messages
+     *                  and their corresponding targets
+     */
     void anySend(const AnyMessages &messages) const {
         Json::Value v;
         v["state"] = state;
@@ -132,6 +161,13 @@ protected:
         send(-1, Json::FastWriter().write(v));
     }
 
+    /**
+     * Get one message from the listen target.
+     *
+     * @param errorType    type of error if any occurs, or `NONE` if none
+     * @param errorPlayer  the player that caused the error if any occurs, or -1 if none
+     * @return message from the listen target, or error message if any error occurs
+     */
     std::string getTargetMessage(ErrorType &errorType, int &errorPlayer) const {
         while (true) {
             Json::Value v = listen();
