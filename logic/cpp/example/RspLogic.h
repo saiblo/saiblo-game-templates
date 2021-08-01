@@ -32,8 +32,7 @@ class RspLogic : public BaseLogic {
         sendGameOverMessage(scores);
     }
 
-    void handleLogic() override {
-        // Send
+    void sendMsgToPlayer() {
         AnyMessages messages;
         std::string sendContent;
         if (round == 0) {
@@ -45,8 +44,9 @@ class RspLogic : public BaseLogic {
         }
         messages.emplace_back(turn, sendContent);
         anySend(messages);  // `singleSend` shouldn't be used as it will not reset timing.
+    }
 
-        // Listen
+    void listenToPlayerResponse() {
         ErrorType errorType;
         int errorPlayer;
         std::string recvContent = getTargetMessage(errorType, errorPlayer);
@@ -63,7 +63,6 @@ class RspLogic : public BaseLogic {
                 }
             }
         }
-
         // Terminate game if any error occurs.
         if (errorType != NONE) {
             history.emplace_back("Player " + std::to_string(errorPlayer) + " error: " + std::to_string(errorType),
@@ -72,8 +71,10 @@ class RspLogic : public BaseLogic {
             win[errorPlayer] = 0;
             writeReplayAndGameOver();
         }
+    }
 
-        turn = 1 - turn;  // Reverse turn.
+    void reverseTurn() {
+        turn = 1 - turn;
         if (turn == 0) {
             // Both player 0 and player 1 have made their choices.
             auto choices = history[round];
@@ -93,6 +94,12 @@ class RspLogic : public BaseLogic {
             // Increase round counter by 1.
             ++round;
         }
+    }
+
+    void handleLogic() override {
+        sendMsgToPlayer();
+        listenToPlayerResponse();
+        reverseTurn();
     }
 };
 
