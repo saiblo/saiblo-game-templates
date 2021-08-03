@@ -43,11 +43,11 @@ class RspLogic : public BaseLogic {
 
         // Following is an example of using `anySend`.
         /* AnyMessages messages;
-        messages.emplace_back(turn, sendContent + "\n");
+        messages.emplace_back(turn, sendContent);
         anySend(messages); */
 
         // Using `singleSend` in this case is easier.
-        singleSend(turn, sendContent + "\n");
+        singleSend(turn, sendContent);
     }
 
     void listenToPlayerResponse() {

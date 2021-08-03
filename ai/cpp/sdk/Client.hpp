@@ -1,11 +1,12 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <sstream>
 
 class Client {
-    void sendMsg(const std::string &msg) {
+    static void sendMsg(const std::string &msg) {
         uint32_t len = msg.length();
-        char head[4]{
+        char head[5]{
                 static_cast<char>(len),
                 static_cast<char>(len >> 8),
                 static_cast<char>(len >> 16),
@@ -13,18 +14,15 @@ class Client {
         };
         puts(head);
         puts(msg.c_str());
-        myHistory.push_back(msg);
     }
 
-    std::string readMsg() {
-        std::string msg;
-        std::getline(std::cin, msg);
-        if (msg != "ready") {
-            enemyHistory.push_back(msg);
-        } else {
-            msg = "";
-        }
-        return msg;
+    static std::string readMsg() {
+        char head[9];
+        scanf("%8c", head);
+        int len = std::stoi(head);
+        std::stringstream msg_stream;
+        for (int i = 0; i < len; i++) msg_stream.put((char) getchar());
+        return msg_stream.str();
     }
 
 protected:
@@ -43,7 +41,14 @@ public:
     [[noreturn]] void run() {
         while (true) {
             auto enemyChoice = readMsg();
+            if (enemyChoice != "ready") {
+                enemyHistory.push_back(enemyChoice);
+            } else {
+                enemyChoice = "";
+            }
+
             auto myChoice = strategy(enemyChoice);
+            myHistory.push_back(myChoice);
             sendMsg(myChoice);
         }
     }

@@ -59,6 +59,11 @@ class BaseLogic:
             'length': self.__length_limit,
         }))
 
+    @staticmethod
+    def __add_ai_message_head(message: str):
+        head = str(len(message))
+        return '0' * (8 - len(head)) + head + message
+
     def _get_state(self) -> int:
         """
         Get current state of the logic.
@@ -99,7 +104,8 @@ class BaseLogic:
         :param msg:     the message to send
         """
         if target >= 0:
-            self.__send(target, msg)
+            self.__send(target,
+                        msg if self._player_status[target] == PlayerStatus.HUMAN else self.__add_ai_message_head(msg))
 
     def _any_send(self, messages: [(int, str)]):
         """
@@ -113,7 +119,8 @@ class BaseLogic:
             'state': self.__state,
             'listen': [self.__listen_target] if self.__listen_target >= 0 else [],
             'player': [x for (x, y) in messages],
-            'content': [y for (x, y) in messages],
+            'content': [y if self._player_status[x] == PlayerStatus.HUMAN else self.__add_ai_message_head(y)
+                        for (x, y) in messages],
         }))
 
     def _get_target_message(self) -> (str, ErrorType, int):

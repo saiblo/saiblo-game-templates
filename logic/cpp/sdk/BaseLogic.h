@@ -34,7 +34,7 @@ class BaseLogic {
 
     static Json::Value listen() {
         // Receive message header from judger
-        uint8_t head[4];
+        uint8_t head[5];
         scanf("%4c", head);
         uint32_t len = head[3] | (head[2] << 8) | (head[1] << 16) | (head[0] << 24);
 
@@ -62,7 +62,7 @@ class BaseLogic {
 
     static void send(uint32_t target, const std::string &msg) {
         uint32_t len = msg.length();
-        char head[8]{
+        char head[9]{
                 static_cast<char>(len),
                 static_cast<char>(len >> 8),
                 static_cast<char>(len >> 16),
@@ -82,6 +82,11 @@ class BaseLogic {
         v["time"] = timeLimit;
         v["length"] = lengthLimit;
         send(-1, Json::FastWriter().write(v));
+    }
+
+    static std::string addAiMessageHead(const std::string &message) {
+        std::string head = std::to_string(message.length());
+        return std::string(8 - head.length(), '0') + head + message;
     }
 
 protected:
@@ -135,9 +140,9 @@ protected:
      * @param target  the target player ID
      * @param msg     the message to send
      */
-    static void singleSend(int target, const std::string &msg) {
+    void singleSend(int target, const std::string &msg) {
         if (target < 0) return;
-        send(target, msg);
+        send(target, playerStatus[target] == AI ? addAiMessageHead(msg) : msg);
     }
 
     /**
@@ -156,7 +161,7 @@ protected:
         v["content"].resize(0);
         for (const auto &message:messages) {
             v["player"].append(message.first);
-            v["content"].append(message.second);
+            v["content"].append(playerStatus[message.first] == AI ? addAiMessageHead(message.second) : message.second);
         }
         send(-1, Json::FastWriter().write(v));
     }

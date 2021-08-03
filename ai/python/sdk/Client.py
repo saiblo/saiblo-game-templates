@@ -2,21 +2,20 @@ import sys
 
 
 class Client:
-    def __send_msg(self, msg: str):
+    @staticmethod
+    def __send_msg(msg: str):
         message_len = len(msg)
         message = message_len.to_bytes(4, byteorder='big', signed=True)
         message += bytes(msg, encoding="utf8")
         sys.stdout.buffer.write(message)
         sys.stdout.flush()
-        self._my_history.append(msg)
 
-    def __read_msg(self) -> str:
-        msg = sys.stdin.readline()
-        if msg != 'ready':
-            self._enemy_history.append(msg)
-        else:
-            msg = ''
-        return msg
+    @staticmethod
+    def __read_msg() -> str:
+        read_buffer = sys.stdin.buffer
+        data_len = int(read_buffer.read(8))
+        data = read_buffer.read(data_len).decode()
+        return data
 
     _my_history = []
     _enemy_history = []
@@ -33,5 +32,10 @@ class Client:
     def run(self):
         while True:
             enemy_choice = self.__read_msg()
+            if enemy_choice != 'ready':
+                self._enemy_history.append(enemy_choice)
+            else:
+                enemy_choice = ''
             my_choice = self._strategy(enemy_choice)
+            self._my_history.append(my_choice)
             self.__send_msg(my_choice)
