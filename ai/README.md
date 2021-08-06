@@ -85,3 +85,7 @@ std::string strategy(const std::string &enemyChoice)
 #### `bool greater(const std::string &l, const std::string &r)`
 
 若`l`表示的手势比`r`表示的手势大，则返回`true`，否则返回`false`。
+
+### 如何调试
+
+你可以使用输出调试法进行调试。在 C++ 版 SDK 中，你可以调用`DEBUG("message")`进行调试；在 Python 版 SDK 中，你可以调用`self._debug('message')`进行调试。
