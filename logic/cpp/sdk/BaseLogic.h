@@ -73,7 +73,7 @@ class BaseLogic {
         putchar(static_cast<char>(target >> 16));
         putchar(static_cast<char>(target >> 8));
         putchar(static_cast<char>(target));
-        puts(msg.c_str());
+        printf(msg.c_str());
     }
 
     void updateLimits() const {
