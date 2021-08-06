@@ -168,8 +168,6 @@ protected:
     /**
      * Send message to a target player.
      *
-     * NOTE: THIS DOES NOT RESET TIMING!
-     *
      * @param target  the target player ID
      * @param msg     the message to send
      */
@@ -201,30 +199,29 @@ protected:
 
     /**
      * Executed after receiving metadata and before entering the major loop.
-     *
-     * IT IS STRICTLY FORBIDDEN TO CALL `anySend()` OR `getTargetMessage()` IN THIS METHOD!!!
      */
     virtual void prepare() = 0;
 
     /**
      * Executed before `handleResponse()`.
      *
-     * This determines the player you listen to during execution of `handleResponse()`.
+     * This determines the player you will send message to and listen to in current round.
      *
      * You can also update the timeLimit and lengthLimit if you like.
      *
      * Note that timing of the target player starts IMMEDIATELY AFTER this method is called.
      *
-     * IT IS STRICTLY FORBIDDEN TO CALL `anySend()` OR `getTargetMessage()` IN THIS METHOD!!!
-     *
      * @param timeLimit    reference to the timeLimit
      * @param lengthLimit  reference to the lengthLimit
-     * @return player ID that you will be listening to, or -1 if none.
+     * @return pair of player ID that you will be listening to, and message content that
+     *         you will be sending.
      */
     virtual std::pair<int, std::string> sendMsgToPlayer(int &timeLimit, int &lengthLimit) = 0;
 
     /**
-     * Handle game logic as well as sending and receiving messages from players.
+     * Handle response from the AI you are listening to.
+     *
+     * @param response     content of the response
      * @param errorType    type of error if any occurs, or `NONE` if none
      * @param errorPlayer  the player that caused the error if any occurs, or -1 if none
      */

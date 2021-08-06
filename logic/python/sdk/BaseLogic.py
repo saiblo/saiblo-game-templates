@@ -123,8 +123,6 @@ class BaseLogic:
         """
         Send message to a target player.
 
-        NOTE: THIS DOES NOT RESET TIMING!
-
         :param target:  the target player ID
         :param msg:     the message to send
         """
@@ -152,8 +150,6 @@ class BaseLogic:
     def _prepare(self):
         """
         Executed after receiving metadata and before entering the major loop.
-
-        IT IS STRICTLY FORBIDDEN TO CALL `_any_send()` OR `_get_target_message()` IN THIS METHOD!!!
         """
         raise NotImplementedError()
 
@@ -161,25 +157,29 @@ class BaseLogic:
         """
         Executed before `_handle_response()`.
 
-        This determines the player you listen to during execution of `_handle_response()`.
+        This determines the player you will send message to and listen to in current round.
 
         You can also update the timeLimit and lengthLimit if you like.
 
         Note that timing of the target player starts IMMEDIATELY AFTER this method is called.
 
-        IT IS STRICTLY FORBIDDEN TO CALL `_any_send()` OR `_get_target_message()` IN THIS METHOD!!!
-
-        :return:  a tuple of three elements. The first element is required, representing
-                  player ID that you will be listening to, or -1 if none. The second element
-                  represents the time limit of the current round, or None if the time limit
-                  should remain unchanged. The third element represents the length limit of
-                  the current round, or None if the length limit should remain unchanged.
+        :return:  a tuple of four elements. The first element is required, representing the
+                  player ID that you will be listening to. The second element refers to the
+                  content of the message you will be sending to the target player. The third
+                  element represents the time limit of the current round, or None if the time
+                  limit should remain unchanged. The fourth element represents the length
+                  limit of the current round, or None if the length limit should remain unchanged.
         """
         raise NotImplementedError()
 
     def _handle_response(self, response: str, error_type: ErrorType, error_player: int):
         """
         Handle game logic as well as sending and receiving messages from players.
+
+        :param response:      content of the response
+        :param error_type:    type of error if any occurs, or `NONE` if none
+        :param error_player:  the player that caused the error if any occurs, or -1 if none
+        :return:
         """
         raise NotImplementedError()
 
