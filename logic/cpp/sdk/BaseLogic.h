@@ -74,6 +74,7 @@ class BaseLogic {
         putchar(static_cast<char>(target >> 8));
         putchar(static_cast<char>(target));
         printf("%s", msg.c_str());
+        std::cout.flush();
     }
 
     void updateLimits() const {

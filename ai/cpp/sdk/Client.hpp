@@ -13,6 +13,7 @@ class Client {
         putchar(static_cast<char>(len >> 8));
         putchar(static_cast<char>(len));
         printf("%s", msg.c_str());
+        std::cout.flush();
     }
 
     static std::string readMsg() {
