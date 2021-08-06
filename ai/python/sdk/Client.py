@@ -1,4 +1,7 @@
+import logging
 import sys
+
+logging.basicConfig(format='%(levelname)-8s [%(filename)s:%(lineno)d] %(message)s', level=logging.DEBUG)
 
 
 class Client:
@@ -19,6 +22,10 @@ class Client:
 
     _my_history = []
     _enemy_history = []
+
+    @staticmethod
+    def _debug(msg: str):
+        logging.debug(msg)
 
     @staticmethod
     def _greater(left: str, right: str) -> bool:

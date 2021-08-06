@@ -1,8 +1,11 @@
 #ifndef SAIBLO_LOGIC_CPP_TEMPLATE_BASELOGIC_H
 #define SAIBLO_LOGIC_CPP_TEMPLATE_BASELOGIC_H
 
+#define DEBUG(msg) { debug(std::string(__FILE__) + "(" + std::to_string(__LINE__) + "):" + msg); }
+
 #include <fstream>
 #include <random>
+#include <iostream>
 #include "../jsoncpp/json/json.h"
 
 enum PlayerStatus {
@@ -96,6 +99,10 @@ protected:
      * Indicate players' status, ordered by the players' ID.
      */
     std::vector<PlayerStatus> playerStatus;
+
+    static void debug(const std::string &msg) {
+        std::cerr << msg << std::endl;
+    }
 
     /**
      * Get current state of the logic.

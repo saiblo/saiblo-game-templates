@@ -1,7 +1,10 @@
 import json
+import logging
 import sys
 from enum import Enum
 from typing import Optional
+
+logging.basicConfig(format='%(levelname)-8s [%(filename)s:%(lineno)d] %(message)s', level=logging.DEBUG)
 
 
 class PlayerStatus(Enum):
@@ -63,6 +66,10 @@ class BaseLogic:
     def __add_ai_message_head(message: str):
         head = str(len(message))
         return '0' * (8 - len(head)) + head + message
+
+    @staticmethod
+    def _debug(msg: str):
+        logging.debug(msg)
 
     def _get_state(self) -> int:
         """

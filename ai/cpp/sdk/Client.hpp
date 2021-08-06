@@ -3,6 +3,8 @@
 #include <vector>
 #include <sstream>
 
+#define DEBUG(msg) { debug(std::string(__FILE__) + "(" + std::to_string(__LINE__) + "):" + msg); }
+
 class Client {
     static void sendMsg(const std::string &msg) {
         uint32_t len = msg.length();
@@ -28,6 +30,10 @@ class Client {
 protected:
     std::vector<std::string> myHistory;
     std::vector<std::string> enemyHistory;
+
+    static void debug(const std::string &msg) {
+        std::cerr << msg << std::endl;
+    }
 
     static bool greater(const std::string &l, const std::string &r) {
         return l == "rock" && r == "scissors" ||
