@@ -21,14 +21,12 @@ enum ErrorType {
     OLE = 2,
 };
 
-typedef std::vector<std::pair<int, std::string>> AnyMessages;
+typedef std::pair<int, std::string> Message;
 
 class BaseLogic {
     std::string replayLocation;
 
     int state{1};
-
-    int listenTarget{-1};
 
     int timeLimit{3};
     int lengthLimit{1024};
@@ -88,6 +86,36 @@ class BaseLogic {
     static std::string addAiMessageHead(const std::string &message) {
         std::string head = std::to_string(message.length());
         return std::string(8 - head.length(), '0') + head + message;
+    }
+
+    void anySend(const Message &message) const {
+        Json::Value v;
+        v["state"] = state;
+        v["listen"].resize(0);
+        v["listen"].append(message.first);
+        v["player"].resize(0);
+        v["content"].resize(0);
+        v["player"].append(message.first);
+        v["content"].append(playerStatus[message.first] == AI ? addAiMessageHead(message.second) : message.second);
+        send(-1, Json::FastWriter().write(v));
+    }
+
+    std::string getTargetMessage(ErrorType &errorType, int &errorPlayer) const {
+        while (true) {
+            Json::Value v = listen();
+            if (v["player"].asInt() >= 0) {
+                errorType = NONE;
+                errorPlayer = -1;
+                return v["content"].asString();
+            } else {
+                Json::Value errorContent;
+                Json::Reader().parse(v["content"].asString(), errorContent);
+                if (errorContent["state"].asInt() != state) continue; // Special case for TLE
+                errorType = static_cast<ErrorType>(errorContent["error"].asInt());
+                errorPlayer = errorContent["player"].asInt();
+                return errorContent["error_log"].asString();
+            }
+        }
     }
 
 protected:
@@ -151,52 +179,6 @@ protected:
     }
 
     /**
-     * Send messages to arbitrary players, request judger to listen to
-     * the `listenTarget` and reset timing if state increases.
-     *
-     * @param messages  vector of int-string pairs, indicating the messages
-     *                  and their corresponding targets
-     */
-    void anySend(const AnyMessages &messages) const {
-        Json::Value v;
-        v["state"] = state;
-        v["listen"].resize(0);
-        if (listenTarget >= 0) v["listen"].append(listenTarget);
-        v["player"].resize(0);
-        v["content"].resize(0);
-        for (const auto &message:messages) {
-            v["player"].append(message.first);
-            v["content"].append(playerStatus[message.first] == AI ? addAiMessageHead(message.second) : message.second);
-        }
-        send(-1, Json::FastWriter().write(v));
-    }
-
-    /**
-     * Get one message from the listen target.
-     *
-     * @param errorType    type of error if any occurs, or `NONE` if none
-     * @param errorPlayer  the player that caused the error if any occurs, or -1 if none
-     * @return message from the listen target, or error message if any error occurs
-     */
-    std::string getTargetMessage(ErrorType &errorType, int &errorPlayer) const {
-        while (true) {
-            Json::Value v = listen();
-            if (v["player"].asInt() >= 0) {
-                errorType = NONE;
-                errorPlayer = -1;
-                return v["content"].asString();
-            } else {
-                Json::Value errorContent;
-                Json::Reader().parse(v["content"].asString(), errorContent);
-                if (errorContent["state"].asInt() != state) continue; // Special case for TLE
-                errorType = static_cast<ErrorType>(errorContent["error"].asInt());
-                errorPlayer = errorContent["player"].asInt();
-                return errorContent["error_log"].asString();
-            }
-        }
-    }
-
-    /**
      * Send game-over message to judger.
      *
      * As logic will terminate as soon as the message is sent,
@@ -225,9 +207,9 @@ protected:
     virtual void prepare() = 0;
 
     /**
-     * Executed before `handleLogic()`.
+     * Executed before `handleResponse()`.
      *
-     * This determines the player you listen to during execution of `handleLogic()`.
+     * This determines the player you listen to during execution of `handleResponse()`.
      *
      * You can also update the timeLimit and lengthLimit if you like.
      *
@@ -239,12 +221,14 @@ protected:
      * @param lengthLimit  reference to the lengthLimit
      * @return player ID that you will be listening to, or -1 if none.
      */
-    virtual int setListenTarget(int &timeLimit, int &lengthLimit) = 0;
+    virtual std::pair<int, std::string> sendMsgToPlayer(int &timeLimit, int &lengthLimit) = 0;
 
     /**
      * Handle game logic as well as sending and receiving messages from players.
+     * @param errorType    type of error if any occurs, or `NONE` if none
+     * @param errorPlayer  the player that caused the error if any occurs, or -1 if none
      */
-    virtual void handleLogic() = 0;
+    virtual void handleResponse(const std::string &response, ErrorType &errorType, int &errorPlayer) = 0;
 
 public:
     void run() {
@@ -254,16 +238,17 @@ public:
             // Set listen target and update limits if necessary.
             int lastTimeLimit = timeLimit;
             int lastLengthLimit = lengthLimit;
-            listenTarget = setListenTarget(timeLimit, lengthLimit);
+            Message message = sendMsgToPlayer(timeLimit, lengthLimit);
             if (lastTimeLimit != timeLimit || lastLengthLimit != lengthLimit) {
                 updateLimits();
             }
-            if (listenTarget >= 0) {
-                anySend(AnyMessages()); // Start timing of the listenTarget
-            }
+            anySend(message); // Start timing of the listenTarget
 
-            // Handle game logic
-            handleLogic();
+            ErrorType errorType;
+            int errorPlayer;
+            std::string response = getTargetMessage(errorType, errorPlayer);
+            // Handle response
+            handleResponse(response, errorType, errorPlayer);
             ++state;
         }
     }

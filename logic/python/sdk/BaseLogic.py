@@ -25,8 +25,6 @@ class BaseLogic:
 
     __state = 1
 
-    __listen_target = -1
-
     __time_limit = 3
     __length_limit = 1024
 
@@ -66,6 +64,26 @@ class BaseLogic:
     def __add_ai_message_head(message: str):
         head = str(len(message))
         return '0' * (8 - len(head)) + head + message
+
+    def __any_send(self, target: int, content: str):
+        self.__send(-1, json.dumps({
+            'state': self.__state,
+            'listen': [target],
+            'player': [target],
+            'content': [
+                content if self._player_status[target] == PlayerStatus.HUMAN else self.__add_ai_message_head(content)],
+        }))
+
+    def __get_target_message(self) -> (str, ErrorType, int):
+        while True:
+            v = self.__listen()
+            if v['player'] >= 0:
+                return v['content'], ErrorType.NONE, -1
+            else:
+                error_content = json.loads(v['content'])
+                if error_content['state'] != self.__state:  # Special case for TLE
+                    continue
+                return error_content['error_log'], ErrorType(error_content['error']), error_content['player']
 
     @staticmethod
     def _debug(msg: str):
@@ -114,41 +132,6 @@ class BaseLogic:
             self.__send(target,
                         msg if self._player_status[target] == PlayerStatus.HUMAN else self.__add_ai_message_head(msg))
 
-    def _any_send(self, messages: [(int, str)]):
-        """
-        Send messages to arbitrary players, request judger to listen to
-        the `self.__listen_target` and reset timing if state increases.
-
-        :param messages:  list of int-string tuples, indicating the messages
-                          and their corresponding targets
-        """
-        self.__send(-1, json.dumps({
-            'state': self.__state,
-            'listen': [self.__listen_target] if self.__listen_target >= 0 else [],
-            'player': [x for (x, y) in messages],
-            'content': [y if self._player_status[x] == PlayerStatus.HUMAN else self.__add_ai_message_head(y)
-                        for (x, y) in messages],
-        }))
-
-    def _get_target_message(self) -> (str, ErrorType, int):
-        """
-        Get one message from the listen target.
-
-        :return: a tuple of three elements. If no error occurs,
-                 (message from the listen target, NONE, -1) will be returned;
-                 otherwise, (error message, error type, the player that caused the error)
-                 will be returned.
-        """
-        while True:
-            v = self.__listen()
-            if v['player'] >= 0:
-                return v['content'], ErrorType.NONE, -1
-            else:
-                error_content = json.loads(v['content'])
-                if error_content['state'] != self.__state:  # Special case for TLE
-                    continue
-                return error_content['error_log'], ErrorType(error_content['error']), error_content['player']
-
     def _send_game_over_message(self, scores: [int]):
         """
         Send game-over message to judger.
@@ -174,11 +157,11 @@ class BaseLogic:
         """
         raise NotImplementedError()
 
-    def _set_listen_target(self) -> (int, Optional[int], Optional[int]):
+    def _send_msg_to_player(self) -> (int, str, Optional[int], Optional[int]):
         """
-        Executed before `_handle_logic()`.
+        Executed before `_handle_response()`.
 
-        This determines the player you listen to during execution of `_handle_logic()`.
+        This determines the player you listen to during execution of `_handle_response()`.
 
         You can also update the timeLimit and lengthLimit if you like.
 
@@ -194,7 +177,7 @@ class BaseLogic:
         """
         raise NotImplementedError()
 
-    def _handle_logic(self):
+    def _handle_response(self, response: str, error_type: ErrorType, error_player: int):
         """
         Handle game logic as well as sending and receiving messages from players.
         """
@@ -204,7 +187,7 @@ class BaseLogic:
         self.__receive_metadata()
         self._prepare()
         while not self.__game_over:
-            listen_target, time_limit, length_limit = self._set_listen_target()
+            listen_target, content, time_limit, length_limit = self._send_msg_to_player()
 
             if time_limit is not None or length_limit is not None:
                 if time_limit is not None:
@@ -213,8 +196,8 @@ class BaseLogic:
                     self.__length_limit = length_limit
                 self.__update_limits()
 
-            if listen_target >= 0:
-                self._any_send([])
+            self.__any_send(listen_target, content)
 
-            self._handle_logic()
+            response, error_type, error_player = self.__get_target_message()
+            self._handle_response(response, error_type, error_player)
             self.__state += 1
