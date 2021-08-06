@@ -100,7 +100,7 @@ JSON 是一种通用的消息传输格式。在 Saiblo 游戏开发中，我们�
 {
     "type": 0,
     "height": 8,
-    "weight": 8
+    "width": 8
 }
 ```
 
