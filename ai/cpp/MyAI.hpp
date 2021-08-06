@@ -6,6 +6,6 @@
 class MyAI : public Client {
     std::string strategy(const std::string &enemyChoice) override {
         // Copy what the enemy chose
-        return enemyChoice;
+        return enemyChoice.empty() ? "rock" : enemyChoice;
     }
 };

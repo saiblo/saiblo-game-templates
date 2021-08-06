@@ -65,17 +65,14 @@ class BaseLogic {
 
     static void send(uint32_t target, const std::string &msg) {
         uint32_t len = msg.length();
-        char head[9]{
-                static_cast<char>(len),
-                static_cast<char>(len >> 8),
-                static_cast<char>(len >> 16),
-                static_cast<char>(len >> 24),
-                static_cast<char>(target),
-                static_cast<char>(target >> 8),
-                static_cast<char>(target >> 16),
-                static_cast<char>(target >> 24),
-        };
-        puts(head);
+        putchar(static_cast<char>(len >> 24));
+        putchar(static_cast<char>(len >> 16));
+        putchar(static_cast<char>(len >> 8));
+        putchar(static_cast<char>(len));
+        putchar(static_cast<char>(target >> 24));
+        putchar(static_cast<char>(target >> 16));
+        putchar(static_cast<char>(target >> 8));
+        putchar(static_cast<char>(target));
         puts(msg.c_str());
     }
 

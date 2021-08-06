@@ -8,13 +8,10 @@
 class Client {
     static void sendMsg(const std::string &msg) {
         uint32_t len = msg.length();
-        char head[5]{
-                static_cast<char>(len),
-                static_cast<char>(len >> 8),
-                static_cast<char>(len >> 16),
-                static_cast<char>(len >> 24),
-        };
-        puts(head);
+        putchar(static_cast<char>(len >> 24));
+        putchar(static_cast<char>(len >> 16));
+        putchar(static_cast<char>(len >> 8));
+        putchar(static_cast<char>(len));
         puts(msg.c_str());
     }
 

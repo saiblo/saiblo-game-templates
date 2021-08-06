@@ -141,7 +141,7 @@ JSON 是一种通用的消息传输格式。在 Saiblo 游戏开发中，我们�
 
 ### 正式开始之前
 
-在`logic`目录下，进入对应语言的目录后，新建一个`connect4`子目录，并在其下创建一个继承自`sdk.BaseLogic.BaseLogic`的自定义类`Connect4Logic`。
+在`logic`目录下，进入对应语言的目录后，新建一个`connect4`子目录，并在其下创建一个继承自`sdk.BaseLogic.BaseLogic`的自定义类`Connect4Logic`。此外，将`main.cpp`(C++) 或`main.py`(Python) 中的`RspLogic`改为你自定义的`Connect4Logic`。
 
 如果你使用的语言是 C++，不要忘记在`CMakeLists.txt`中添加你创建的新文件。
 
