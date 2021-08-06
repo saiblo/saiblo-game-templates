@@ -4506,8 +4506,6 @@ void FastWriter::omitEndingLineFeed() { omitEndingLineFeed_ = true; }
 JSONCPP_STRING FastWriter::write(const Value& root) {
   document_.clear();
   writeValue(root);
-  if (!omitEndingLineFeed_)
-    document_ += "\n";
   return document_;
 }
 
