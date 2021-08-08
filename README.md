@@ -167,7 +167,7 @@ JSON 是一种通用的消息传输格式。在 Saiblo 游戏开发中，我们�
 
 需要实现的函数：`std::pair<int, std::string> sendMsgToPlayer(int &timeLimit, int &lengthLimit)`(C++)、`_send_msg_to_player(self) -> (int, str, Optional[int], Optional[int])`(Python)。
 
-在主体回合制循环中，每一次迭代，逻辑都会与一名玩家进行交互，**并要求裁判程序对该玩家进行计时**。因此，在每一轮迭代开始的时候，逻辑都会调用该函数，以向该回合指定的 AI 发送消息，对它的执行时间和输出长度进行限制，监听并开始计时。
+在主体回合制循环中，每一次迭代，逻辑都会与**一名**玩家进行交互，**并要求裁判程序对该玩家进行计时**。因此，在每一轮迭代开始的时候，逻辑都会调用该函数，以向该回合指定的 AI 发送消息，对它的执行时间和输出长度进行限制，监听并开始计时。
 
 你的任务就是实现该函数，用它的返回值指定当前回合的交互对象，并向它发送一条消息。你还可以设置当前回合的 AI 最大用时限制和最长输出限制。
 
@@ -225,9 +225,7 @@ C++ 中可以通过`Json::Reader().parse(str, o)`尝试将 JSON 字符串`str`�
 
 `BaseLogic`类提供了`writeTextToReplay`(C++)、`__write_text_to_replay`(Python) 和`writeJsonToReplay`(C++)、`__write_json_to_replay`(Python) 等成员函数用于实现写入回放文件的功能，你可以直接调用。
 
-`BaseLogic`类提供了`sendGameOverMessage`(C++)、`__send_game_over_message`(Python) 等成员函数用于向裁判程序报告胜负结果。对于四子棋游戏而言，传入函数的参数应当为一个二元向量/列表，分别表示 0 号 AI 和 1 号 AI 的得分。
-
-**注意：该函数调用完毕后，逻辑程序将立即终止。**
+`BaseLogic`类提供了`sendGameOverMessage`(C++)、`__send_game_over_message`(Python) 等成员函数用于向裁判程序报告胜负结果。对于四子棋游戏而言，传入函数的参数应当为一个二元向量/列表，分别表示 0 号 AI 和 1 号 AI 的得分。**注意：该函数调用完毕后，逻辑程序将立即终止。**
 
 关于这些函数用法更具体的描述，可参阅`logic`目录下的`README.md`（逻辑模板使用说明文档）。
 
