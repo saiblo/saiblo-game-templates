@@ -18,8 +18,8 @@
 
         // Interact with saiblo
 
-        function startWebSocket(token, tokenB64, secure) {
-            const ws = new WebSocket((secure ? "wss://" : "ws://") + token);
+        function startWebSocket(token, tokenB64) {
+            const ws = new WebSocket("wss://" + token);
 
             ws.onopen = () => {
                 console.log("Connection open...");
@@ -47,16 +47,17 @@
             console.log("WebSocket not open yet.");
         };
 
-        if (DEBUG) {
-            const token = "127.0.0.1:9010/1/Aglove/1";
-            sendMsg = startWebSocket(token, btoa(token), false);
-        }
-
         let notifyCanvasHeight = (height) => {
             if (!DEBUG) {
                 console.log('Father website is not ready yet.');
             }
         };
+
+        function manualConnect(token) {
+            if (DEBUG) {
+                sendMsg = startWebSocket(atob(token), token);
+            }
+        }
 
         function readMsg(event) {
             const msg = event.data;
@@ -78,7 +79,7 @@
                 loadNextFrame();
             } else if (msg.message === "init_player_player") { // 在线播放器
                 gameMode = ONLINE;
-                sendMsg = startWebSocket(atob(msg.token), msg.token, true);
+                sendMsg = startWebSocket(atob(msg.token), msg.token);
             } else if (msg.message === "init_spectator_player") { // 观战模式
                 gameMode = SPECTATOR;
             }
