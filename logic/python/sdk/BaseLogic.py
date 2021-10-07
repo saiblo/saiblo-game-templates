@@ -87,7 +87,7 @@ class BaseLogic:
 
     @staticmethod
     def _debug(msg: str):
-        logging.debug(msg)
+        logging.debug(msg, stacklevel=3)
 
     def _get_state(self) -> int:
         """

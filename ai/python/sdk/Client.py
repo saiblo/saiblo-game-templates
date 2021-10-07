@@ -25,7 +25,7 @@ class Client:
 
     @staticmethod
     def _debug(msg: str):
-        logging.debug(msg)
+        logging.debug(msg, stacklevel=3)
 
     @staticmethod
     def _greater(left: str, right: str) -> bool:
