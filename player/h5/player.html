@@ -18,6 +18,8 @@
 
         // Interact with saiblo
 
+        window.addEventListener('message', readMsg, false);
+
         function startWebSocket(token, tokenB64) {
             const ws = new WebSocket("wss://" + token);
 
