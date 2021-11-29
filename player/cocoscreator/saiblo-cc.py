@@ -108,6 +108,8 @@ index_html = index_html \
     .replace('src/system.bundle.js', f'{base_url}src/system.bundle.js') \
     .replace('src/import-map.json', f'{base_url}src/import-map.json') \
     .replace('./index.js', f'{base_url}index.js') \
+    .replace('style="width: 1280px; height: 960px;"', '') \
+    .replace('width="1280" height="960"', '') \
     .replace('<body>', f'<body>{INJECTED_CODE}')
 
 with open(root_dir / 'player.html', 'w') as f:
