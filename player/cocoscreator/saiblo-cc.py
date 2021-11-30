@@ -1,6 +1,7 @@
 import argparse
 import os
 import pathlib
+import re
 
 GAME_URL = 'https://cdn.jsdelivr.net/gh/saiblo/saiblo-game-cdn@latest/'
 GAME_URL_DEV = 'https://player.dev.saiblo.net/'
@@ -53,6 +54,20 @@ INJECTED_CODE = """
       }
     }
   }, false)
+  window.onload = () => {
+    const div = window.document.getElementById("GameDiv");
+    let timeout = null;
+    window.onresize = () => {
+      if (timeout === null) {
+        timeout = setTimeout(() => {
+          div.style.setProperty("height", (window.innerHeight - 20) + "px");
+          div.style.setProperty("width", (window.innerWidth - 20) + "px");
+          window.dispatchEvent(new Event("resize"));
+          timeout = null;
+        }, 100);
+      }
+    }
+  }
   console.log('Saiblo compatibility code injected.')
 </script>
 """
@@ -108,9 +123,11 @@ index_html = index_html \
     .replace('src/system.bundle.js', f'{base_url}src/system.bundle.js') \
     .replace('src/import-map.json', f'{base_url}src/import-map.json') \
     .replace('./index.js', f'{base_url}index.js') \
-    .replace('style="width: 1280px; height: 960px;"', '') \
-    .replace('width="1280" height="960"', '') \
     .replace('<body>', f'<body>{INJECTED_CODE}')
+
+index_html = re.sub(r'<h1 class="header">(?:.|\n)*</h1>', "", index_html)
+
+index_html = re.sub(r'<p class="footer">(?:.|\n)*</p>', "", index_html)
 
 with open(root_dir / 'player.html', 'w') as f:
     f.write(index_html)
