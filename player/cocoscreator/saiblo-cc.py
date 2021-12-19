@@ -44,6 +44,7 @@ INJECTED_CODE = """
     } else if (msg.message === "load_players") {
       if (!window.saiblo) window.saiblo = {};
       window.saiblo.players = msg.players;
+      window.saiblo.callback.loadPlayers(msg.players);
     } else if (msg.message === "init_player_player") {
       if (!window.saiblo) window.saiblo = {};
       window.saiblo.token = msg.token;
