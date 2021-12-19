@@ -25,16 +25,14 @@ INJECTED_CODE = """
           height: h - 30,
         }, ev.origin);
       }
-      window.saiblo = {
-        replay: msg.replay_data,
-        players: [],
-        confirmReplay(numberOfFrames) {
-          const initMsg = { message: 'init_successfully', number_of_frames: numberOfFrames };
-          ev.source.postMessage(initMsg, ev.origin);
-        },
-        resize: debounce(origResize, 100),
-        callback: {},
-      }
+      if (!window.saiblo) window.saiblo = {};
+      window.saiblo.replay = msg.replay_data;
+      window.saiblo.confirmReplay = function (numberOfFrames) {
+        const initMsg = { message: 'init_successfully', number_of_frames: numberOfFrames };
+        ev.source.postMessage(initMsg, ev.origin);
+      };
+      window.saiblo.resize = debounce(origResize, 100);
+      window.saiblo.callback = {};
     } else if (msg.message === 'load_frame') {
       if (window.saiblo.callback.loadFrame) {
         window.saiblo.callback.loadFrame(msg["index"]);
@@ -44,14 +42,13 @@ INJECTED_CODE = """
         window.saiblo.callback.nextFrame();
       }
     } else if (msg.message === "load_players") {
+      if (!window.saiblo) window.saiblo = {};
       window.saiblo.players = msg.players;
     } else if (msg.message === "init_player_player") {
-      window.saiblo = {
-        token: msg.token,
-        players: [],
-        resize: debounce(origResize, 100),
-        callback: {},
-      }
+      if (!window.saiblo) window.saiblo = {};
+      window.saiblo.token = msg.token;
+      window.saiblo.resize = debounce(origResize, 100);
+      window.saiblo.callback = {};
     }
   }, false)
   window.onload = () => {
