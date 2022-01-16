@@ -3,7 +3,7 @@ import os
 import pathlib
 import re
 
-GAME_URL = 'https://cdn.jsdelivr.net/gh/saiblo/saiblo-game-cdn@latest/'
+GAME_URL = 'https://game.cdn.saiblo.net/'
 GAME_URL_DEV = 'https://player.dev.saiblo.net/'
 
 INJECTED_CODE = """
